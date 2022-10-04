@@ -2,12 +2,17 @@
 # https://github.com/qt1/xmastree2020
 # Written by baruch@ibn-labs.com
 # Enjoy!
+import pygame
+#while pygame.mixer.music.get_busy() == True:
+#    pass
 
 import sys
 import time
 import re
 import math
 from math import sin, cos, pi
+
+I = 255 # intensity
 
 # activate simulation if he "--sim" flag is set
 if '--sim' in sys.argv:
@@ -19,13 +24,15 @@ else:
     import board
     import neopixel
 
+if '--dim' in sys.argv:
+    I = 15
+
 
 # utility functions for converting float 0..1 color components into [0..255] :
 
 def clamp(v, low, hi):
     "clamp a value to limits "
     return [max(low, min(hi, x)) for x in v]
-
 
 def clamp_scale(v, low, hi, scale):
     "clamp a value to limits "
@@ -34,7 +41,7 @@ def clamp_scale(v, low, hi, scale):
 
 def clamp_scale_0_255(v):
     "clamp a value to [0..1] then scale to 0..255"
-    return clamp_scale(v, 0, 1, 255)
+    return clamp_scale(v, 0, 1, I)
 
 
 # the animation loop
@@ -83,6 +90,11 @@ def xmaslight(fx, duration=0, **kwargs):
 
     t0 = time.time()
     t = 0
+
+    pygame.mixer.init()
+    pygame.mixer.music.load('data/HabibGalbi.mp3')
+    pygame.mixer.music.play()
+
     while duration <= 0 or duration >= t:
         t_now = time.time()-t0
         dt = t_now-t
