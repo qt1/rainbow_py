@@ -113,7 +113,7 @@ class LedPlayer:
 
 
 if __name__ == '__main__':
-    out_file_name = Path('xlights_recording', 'out_file2')
+    out_file_name = Path('xlights_recording', 'habib_45_secs')
 
     with open(out_file_name, mode='rb') as file:  # b is important -> binary
         bytes_data = file.read()

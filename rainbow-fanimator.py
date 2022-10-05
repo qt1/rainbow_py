@@ -73,7 +73,7 @@ def rainbow(duration=60, **kwargs):
 
     t0 = datetime.datetime.now()
     t_now_seconds = 0
-    out_file_name = Path('xlights_recording', 'out_file2')
+    out_file_name = Path('xlights_recording', 'habib_45_secs')
 
     with open(out_file_name, mode='rb') as file:  # b is important -> binary
         fileContent = file.read()
