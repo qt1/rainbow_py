@@ -14,6 +14,10 @@ from math import sin, cos, pi
 
 I = 255 # intensity
 
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+
 # activate simulation if he "--sim" flag is set
 if '--sim' in sys.argv:
     print("Simulation Mode - starting")
