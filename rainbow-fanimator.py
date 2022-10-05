@@ -26,24 +26,6 @@ else:
     import board
     import neopixel
 
-
-# utility functions for converting float 0..1 color components into [0..255] :
-
-def clamp(v, low, hi):
-    "clamp a value to limits "
-    return [max(low, min(hi, x)) for x in v]
-
-
-def clamp_scale(v, low, hi, scale):
-    "clamp a value to limits "
-    return [max(low, min(hi, x))*scale for x in v]
-
-
-def clamp_scale_0_255(v):
-    "clamp a value to [0..1] then scale to 0..255"
-    return clamp_scale(v, 0, 1, 255)
-
-
 # the animation loop
 coords = []
 pixels = {}
@@ -88,8 +70,6 @@ FPS = 40
 def rainbow(duration=60, **kwargs):
     "run space+time animation function fx for a given duration (0=forever) "
     global coords, pixels
-
-    # YOU CAN EDIT FROM HERE DOWN
 
     t0 = datetime.datetime.now()
     t_now_seconds = 0
