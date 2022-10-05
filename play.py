@@ -29,12 +29,15 @@ else:
 
 
 # Xlights Recording Config
-RAINBOW_LEDS = 10 * 7  # num_per_rainbow * rainbows
+LARGE_RAINBOW_LEDS = 10 * 7  # num_per_rainbow * rainbows
+SMALL_RAINBOW_LEDS = 7 * 7  # num_per_rainbow * rainbows
 CLOUD_LEDS = 25 * 2
-NUM_OF_LEDS_PER_STRING = RAINBOW_LEDS + CLOUD_LEDS + 1  # One extra led will always be recorded and added to the packet.
-NUM_OF_STRINGS = 1
+TOTAL_NUM_OF_LEDS = LARGE_RAINBOW_LEDS + SMALL_RAINBOW_LEDS + CLOUD_LEDS  # One extra led will always be recorded and added to the packet.
+
 TIME_PACKET_BYTE_SIZE = 4
-BYTES_PER_FRAME = TIME_PACKET_BYTE_SIZE + NUM_OF_LEDS_PER_STRING * NUM_OF_STRINGS * 3
+
+BYTES_PER_FRAME = TIME_PACKET_BYTE_SIZE + (TOTAL_NUM_OF_LEDS + 1) * 3   # One extra led will always be recorded and added to the packet.
+
 FPS = 25
 TIME_FOR_FRAME_IN_MILLISECONDS = 1000 / FPS
 
@@ -56,9 +59,11 @@ class LedPlayer:
         self.bytes_data = bytes_data
         self.total_frames = len(self.bytes_data) / BYTES_PER_FRAME
 
-        self.leds_per_string = NUM_OF_LEDS_PER_STRING
-        self.num_of_strings = NUM_OF_STRINGS
-        self.pixels = neopixel.NeoPixel(board.D18, (self.leds_per_string - 1), auto_write=False)
+        # self.leds_per_universe = NUM_OF_LEDS_PER_UNIVERSE
+        # self.num_of_universes = NUM_OF_UNIVERSES
+
+        self.total_num_of_leds = TOTAL_NUM_OF_LEDS
+        self.pixels = neopixel.NeoPixel(board.D18, (self.total_num_of_leds), auto_write=False)
 
     def play_animation(self, **kwargs):
         t0 = datetime.datetime.now()
