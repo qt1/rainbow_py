@@ -62,44 +62,49 @@ class LedPlayer:
 
     def play_animation(self, **kwargs):
         t0 = datetime.datetime.now()
-        frame_count = 0
-
+        frame_index = 0
         t_now_in_milli_sec = 0
-        animation_timestamp_in_mill_secs = 0
 
         if self.sequence_type == SequenceTypeChoices.MUSIC:
-            pygame.mixer.init()
-            pygame.mixer.music.load(self.music_file_path)
-            pygame.mixer.music.play()
+            self.play_music()
 
-        while frame_count <= self.total_frames:
-            while t_now_in_milli_sec <= animation_timestamp_in_mill_secs:
-                if self.sequence_type == SequenceTypeChoices.FRAME:
-                    t_now_in_sec = (frame_count / FPS) * 1_000
-                    t_now_in_milli_sec = int(t_now_in_sec.total_seconds() * 1_000)
-                elif self.sequence_type == SequenceTypeChoices.TIME:
-                    t_now_in_sec = datetime.datetime.now() - t0
-                    t_now_in_milli_sec = int(t_now_in_sec.total_seconds() * 1_000)
-                elif self.sequence_type == SequenceTypeChoices.MUSIC:
-                    t_now_in_sec = datetime.datetime.now() - t0
-                    t_now_in_milli_sec_clock = int(t_now_in_sec.total_seconds() * 1_000)
-                    t_now_in_milli_sec = pygame.mixer.music.get_pos()
-                sleep(0.001)
-
-            frame_start_byte = frame_count * BYTES_PER_FRAME
-            frame_t_millisec_in_bytes = self.bytes_data[frame_start_byte:frame_start_byte + 4]
-            animation_timestamp_in_mill_secs = int.from_bytes(frame_t_millisec_in_bytes, byteorder='little')
-
-            if animation_timestamp_in_mill_secs + 25 < t_now_in_milli_sec:
-                miliseconds_diff = t_now_in_milli_sec - animation_timestamp_in_mill_secs
-                frame_count += int(miliseconds_diff // TIME_FOR_FRAME_IN_MILLISECONDS)
+        while frame_index <= self.total_frames:
+            animation_timestamp_in_mill_secs = self.get_timestamp_from_frame(frame_index)
+            t_now_in_milli_sec = self.get_now_by_sequence_type(animation_timestamp_in_mill_secs,
+                                                               frame_index, t0,  t_now_in_milli_sec)
 
             for LED in range(len(self.pixels.pixels)):
-                led_data = self.get_led_from_frame(LED, frame_num=frame_count)
+                led_data = self.get_led_from_frame(LED, frame_num=frame_index)
                 self.pixels[LED] = led_data
             self.pixels.show()
-            frame_count += 1
 
+            frame_index += 1
+            if animation_timestamp_in_mill_secs + 25 < t_now_in_milli_sec:
+                milliseconds_diff = t_now_in_milli_sec - animation_timestamp_in_mill_secs
+                frame_index += int(milliseconds_diff // TIME_FOR_FRAME_IN_MILLISECONDS)
+
+    def get_timestamp_from_frame(self, frame_index):
+        frame_start_byte = frame_index * BYTES_PER_FRAME
+        frame_t_millisec_in_bytes = self.bytes_data[frame_start_byte:frame_start_byte + 4]
+        return int.from_bytes(frame_t_millisec_in_bytes, byteorder='little')
+
+    def get_now_by_sequence_type(self, animation_timestamp_in_mill_secs, frame_index, t0, t_now_in_milli_sec):
+        while t_now_in_milli_sec <= animation_timestamp_in_mill_secs:
+            if self.sequence_type == SequenceTypeChoices.FRAME:
+                swing_multiplier = 1  # TODO - add swing multiplier.
+                t_now_in_milli_sec = ((frame_index / FPS) * 1_000 * swing_multiplier) % self.total_frames
+            elif self.sequence_type == SequenceTypeChoices.TIME:
+                t_now_in_sec = datetime.datetime.now() - t0
+                t_now_in_milli_sec = int(t_now_in_sec.total_seconds() * 1_000)
+            elif self.sequence_type == SequenceTypeChoices.MUSIC:
+                t_now_in_milli_sec = pygame.mixer.music.get_pos()
+            sleep(0.001)
+        return t_now_in_milli_sec
+
+    def play_music(self):
+        pygame.mixer.init()
+        pygame.mixer.music.load(self.music_file_path)
+        pygame.mixer.music.play()
 
     def get_led_from_frame(self, led_index, frame_num, *args, **kwargs):
         byte_start = int(BYTES_PER_FRAME * (frame_num - 1) + TIME_PACKET_BYTE_SIZE + led_index * 3)
