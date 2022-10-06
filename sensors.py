@@ -50,12 +50,15 @@ class Sensors:
 
     @property
     def swing_multiplier(self):
-        # TODO - calculate speed multiplier
+        # TODO - calculate speed multiplier.
         return 1
 
-    def is_disrupt_animation(self):
-        # TODO - disrupt when new person sits on an empty swing.
+    def is_new_person_sitting(self):
+        # TODO - define terms for correct sitting disruption.
         return False
+
+    def is_disrupt_animation(self):
+        return self.is_new_person_sitting()
 
     def get_sample(self):
         line = None
