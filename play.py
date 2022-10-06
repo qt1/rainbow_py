@@ -38,7 +38,7 @@ TIME_PACKET_BYTE_SIZE = 4
 
 BYTES_PER_FRAME = TIME_PACKET_BYTE_SIZE + (TOTAL_NUM_OF_LEDS + 1) * 3   # One extra led will always be recorded and added to the packet.
 
-FPS = 25
+FPS = 40
 TIME_FOR_FRAME_IN_MILLISECONDS = 1000 / FPS
 
 
@@ -64,6 +64,7 @@ class LedPlayer:
 
         self.total_num_of_leds = TOTAL_NUM_OF_LEDS
         self.pixels = neopixel.NeoPixel(board.D18, (self.total_num_of_leds), auto_write=False)
+        self.fps = FPS
 
     def play_animation(self, **kwargs):
         t0 = datetime.datetime.now()
@@ -84,7 +85,7 @@ class LedPlayer:
             self.pixels.show()
 
             frame_index += 1
-            if animation_timestamp_in_mill_secs + 25 < t_now_in_milli_sec:
+            if animation_timestamp_in_mill_secs + TIME_FOR_FRAME_IN_MILLISECONDS < t_now_in_milli_sec:
                 milliseconds_diff = t_now_in_milli_sec - animation_timestamp_in_mill_secs
                 frame_index += int(milliseconds_diff // TIME_FOR_FRAME_IN_MILLISECONDS)
 
@@ -94,10 +95,13 @@ class LedPlayer:
         return int.from_bytes(frame_t_millisec_in_bytes, byteorder='little')
 
     def get_now_by_sequence_type(self, animation_timestamp_in_mill_secs, frame_index, t0, t_now_in_milli_sec):
+        t0 = datetime.datetime.now()
         while t_now_in_milli_sec <= animation_timestamp_in_mill_secs:
             if self.sequence_type == SequenceTypeChoices.FRAME:
-                swing_multiplier = 1  # TODO - add swing multiplier.
-                t_now_in_milli_sec = ((frame_index / FPS) * 1_000 * swing_multiplier) % self.total_frames
+                # TODO - improve this
+                swing_multiplier = 1
+                t_diff = datetime.datetime.now() - t0
+                t_now_in_milli_sec = t_now_in_milli_sec + (t_diff.total_seconds() * swing_multiplier) * 1_000
             elif self.sequence_type == SequenceTypeChoices.TIME:
                 t_now_in_sec = datetime.datetime.now() - t0
                 t_now_in_milli_sec = int(t_now_in_sec.total_seconds() * 1_000)
