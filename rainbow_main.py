@@ -6,7 +6,7 @@ import pygame
 from play import LedPlayer, SequenceTypeChoices
 from sensors import Sensors
 
-playlist = ['data/HabibGalbi.mp3']
+playlist = [Path('data/HabibGalbi.mp3')]
 animations = [Path('xlights_recording', 'habib_45_secs')]
 
 
@@ -16,13 +16,16 @@ if __name__ == '__main__':
     shuffle(playlist)
     shuffle(animations)
 
+    led_player = None
     for i, music_file_path in enumerate(playlist):
-        pygame.mixer.init()
-        pygame.mixer.music.load(music_file_path)
-        pygame.mixer.music.play()
-
         out_file_name = animations[i % len(animations)]
-        with open(out_file_name, mode='rb') as file:  # b is important -> binary
-            bytes_data = file.read()
-            led_player = LedPlayer(sequence_type=SequenceTypeChoices.FRAME, bytes_data=bytes_data)
-            led_player.play_animation()
+        try:
+            with open(out_file_name, mode='rb') as file:  # b is important -> binary
+                bytes_data = file.read()
+                led_player = LedPlayer(sequence_type=SequenceTypeChoices.FRAME, bytes_data=bytes_data, music_file_path=music_file_path, sensors=sensors)
+                led_player.play_animation()
+        except Exception as e:
+            LedPlayer.stop_music()
+            if led_player:
+                led_player.turn_off_leds()
+                led_player = None

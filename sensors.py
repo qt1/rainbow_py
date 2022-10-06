@@ -66,6 +66,10 @@ class Sensors:
         self.swing_1_weight.add_sample(swing_1_weight)
         self.swing_2_weight.add_sample(swing_2_weight)
 
+    def is_distrupt_animation(self):
+        # TODO - ditrupt when new person sits on an empty swing.
+        return False
+
 
 def listener():
     while True:
