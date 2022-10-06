@@ -153,9 +153,11 @@ class LedPlayer:
                 sleep(0.001)
             frames_diff = diff_in_milli_secs(t0=last_show_frame_time, t1=datetime.datetime.now()) // ttf
             frame_i += frames_diff
-            self.fps = 25
-            if self.sensors and self.sensors.is_distrupt_animation():
-                raise Exception('Distrupted by sensors.')
+
+            if self.sensors:
+                self.fps = FPS * self.sensors.swing_multiplier
+                if self.sensors.is_distrupt_animation():
+                    raise Exception('Disrupted by sensors.')
 
 
 if __name__ == '__main__':

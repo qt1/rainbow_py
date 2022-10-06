@@ -47,6 +47,16 @@ class Sensors:
         print(self.serial_connection.name)  # check which port was really used
         self.serial_connection.write(b'hello')  # write a string
 
+
+    @property
+    def swing_multiplier(self):
+        # TODO - calculate speed multiplier
+        return 1
+
+    def is_disrupt_animation(self):
+        # TODO - disrupt when new person sits on an empty swing.
+        return False
+
     def get_sample(self):
         line = None
         max_tries = 10
@@ -66,9 +76,6 @@ class Sensors:
         self.swing_1_weight.add_sample(swing_1_weight)
         self.swing_2_weight.add_sample(swing_2_weight)
 
-    def is_distrupt_animation(self):
-        # TODO - ditrupt when new person sits on an empty swing.
-        return False
 
 
 def listener():
