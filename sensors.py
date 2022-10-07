@@ -4,10 +4,11 @@ import time
 import serial
 import json 
 import sys
-from math import sqrt, acos, pi
+from math import sqrt, acos, pi, copysign
 import socket
-
 import threading
+
+sign = lambda x: copysign(1, x)
 
 drawing_enabled = False
 
@@ -16,7 +17,6 @@ if '--sim' in sys.argv or 'baruch' in socket.gethostname():
     drawing_enabled = True
 else:    
     from render_stub import * 
-
 
 
 
@@ -38,8 +38,14 @@ def vnorm(v):
     d = vlen(v)
     return [x/d for x in v]
 
+def angle_deg(a,b):
+    return acos(dot(vnorm(a),vnorm(b)))*180/pi
+
+
 class RunAvg:
     s = 0
+    s2 = 0 # estimator of typical mse
+
     init_from_sample = True
     history = []
     history_max_len = 100
@@ -57,15 +63,18 @@ class RunAvg:
             self.s = [z[0]*(1-self.a) + self.a*z[1] for z in zip (self.s,v) ]
         else:
             self.s = self.s*(1-self.a) + v*self.a
+            self.s2 = self.s2*(1-self.a) + (v-self.s)*(v-self.s)*self.a
 
         self.history = (self.history + [v])[-self.history_max_len:]
 
 
-#WEIGHT_THRESHOLD = 0.002
+WEIGHT_THRESHOLD = 2000 #??
 
 class Weight:
     last = 0
     count = 0
+    avg1 = RunAvg(0, 0.1)
+
     avg1 = RunAvg(0, 0.1)
 
     def add_sample(self, v):
@@ -90,16 +99,13 @@ class Acceleration:
         self.color = color
     
     def add_sample(self, s):
-        s = [s['ax'], s['ay'], s['az']]
-        self.last = vnorm(s) 
+        self.last = vnorm([s['ax'], s['ay'], s['az']]) 
         self.count = self.count + 1
         self.down.add(self.last)
         self.avg.add(self.last)
 
-    def angle(self):
-        a = vnorm(self.avg.s)
-        d = vnorm(down.avg.s)
-        return acos(dot(a,d))
+    def angle_deg(self):
+        return angle_deg(self.avg.s, self.down.s)*sign(self.avg.s[2] - self.down.s[2])
 
 waight0 = Weight()
 waight1 = Weight()
@@ -121,59 +127,7 @@ def process_line(j):
     if 'MPU1' in j and 'ax' in j['MPU1']:
         accel1.add_sample(j['MPU1'])
 
-
-
-class Sensors:
-    # serial_connection = None
-
-    # swing_1_acceleration = Acceleration()
-    # swing_1_weight = Weight()
-    # swing_2_acceleration = Acceleration()
-    # swing_2_weight = Weight()
-
-    # def __init__(self):
-    #     try:
-    #         self.serial_connection = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)  # open serial port
-    #     except Exception:
-    #         return
-    #     print(self.serial_connection.name)  # check which port was really used
-    #     self.serial_connection.write(b'hello')  # write a string
-
-
-    @property
-    def swing_multiplier(self):
-        # TODO - calculate speed multiplier.
-        return 1
-
-    def is_new_person_sitting(self):
-        # TODO - define terms for correct sitting disruption.
-        return False
-
-    def is_disrupt_animation(self):
-        return False
-        # return self.is_new_person_sitting()
-
-    # def get_sample(self):
-    #     line = None
-    #     max_tries = 10
-    #     i = 0
-    #     while line is None or line == b'' or i > max_tries:
-    #         line = self.serial_connection.readline()
-    #         i += 1
-
-    #     try:
-    #         j = json.loads("{" + line.decode("utf-8") + "}")
-    #         swing_1_acceleration, swing_1_weight, swing_2_acceleration, swing_2_weight = process_line(j)
-    #     except Exception as e:
-    #         swing_1_acceleration, swing_1_weight, swing_2_acceleration, swing_2_weight = [1, 1, 1], 1, [1, 1, 1], 1
-
-    #     self.swing_1_acceleration.add_sample(swing_1_acceleration)
-    #     self.swing_2_acceleration.add_sample(swing_2_acceleration)
-    #     self.swing_1_weight.add_sample(swing_1_weight)
-    #     self.swing_2_weight.add_sample(swing_2_weight)
-
-
-
+  
 def listener():
     while True:
         ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)  # open serial port
@@ -209,19 +163,40 @@ def draw_worker():
         # y2 = y2  + [[h[0] for h in accel1.avg.history]]
         # y2 = y2  + [[h[1] for h in accel1.avg.history]]
         # y2 = y2  + [[h[2] for h in accel1.avg.history]]
-        # renderer.y2 = y2
+        renderer.y2 = [[angle_deg(h,accel1.down.s) for h in accel1.avg.history]]
 
         renderer.show()
 
+class Sensors:
+    # serial_connection = None
+
+    # swing_1_acceleration = Acceleration()
+    # swing_1_weight = Weight()
+    # swing_2_acceleration = Acceleration()
+    # swing_2_weight = Weight()
+
+    def __init__(self):
+        self.listener_thread = threading.Thread(target=listener)
+        self.listener_thread.start()
+
+        if drawing_enabled:
+            self.draw_thread = threading.Thread(target=draw_worker)
+            self.draw_thread.start()
+
+    @property
+    def swing_multiplier(self):
+        accel0.angle_deg()
+
+    def is_new_person_sitting(self):
+        return waight0.avg1 > WEIGHT_THRESHOLD
+
+    def is_disrupt_animation(self):
+        return self.is_new_person_sitting()
+
+
 
 if __name__ == "__main__":
-    listener_thread = threading.Thread(target=listener)
-    listener_thread.start()
-
-    if drawing_enabled:
-        draw_thread = threading.Thread(target=draw_worker)
-        draw_thread.start()
-
     #do yar shit
-    listener_thread.join()
+    sensors = Sensors()
+    sensors.listener_thread.join()
 
