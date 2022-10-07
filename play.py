@@ -156,7 +156,7 @@ class LedPlayer:
 
             if self.sensors:
                 self.fps = FPS * self.sensors.swing_multiplier
-                if self.sensors.is_distrupt_animation():
+                if self.sensors.is_disrupt_animation():
                     raise Exception('Disrupted by sensors.')
 
 
@@ -167,6 +167,6 @@ if __name__ == '__main__':
         bytes_data = file.read()
 
         # player = LedPlayer(sequence_type=SequenceTypeChoices.TIME, bytes_data=bytes_data)
-        habib_galabi_file_path = Path('data/HabibGalbi.mp3')
+        habib_galabi_file_path = Path('data/music/HabibGalbi.mp3')
         player = LedPlayer(sequence_type=SequenceTypeChoices.FRAME, bytes_data=bytes_data, music_file_path=habib_galabi_file_path)
         player.play_animation()

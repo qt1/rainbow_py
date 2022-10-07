@@ -1,14 +1,21 @@
+from os.path import isfile
 from pathlib import Path
 from random import shuffle
 
+import os
 import pygame
 
 from play import LedPlayer, SequenceTypeChoices
 from sensors import Sensors
 
-playlist = [Path('data/HabibGalbi.mp3')]
-animations = [Path('xlights_recording', 'habib_45_secs')]
 
+playlist_dir = Path('data/music/')
+playlist = [Path(playlist_dir, f) for f in os.listdir(playlist_dir) if isfile(Path(playlist_dir, f))]
+# playlist = [Path('data/HabibGalbi.mp3')]
+
+animations_dir = Path('data/animations/')
+# animations = [Path('xlights_recording', 'habib_45_secs')]
+animations = [Path(animations_dir, f) for f in os.listdir(animations_dir) if isfile(Path(animations_dir, f))]
 
 if __name__ == '__main__':
     sensors = Sensors()

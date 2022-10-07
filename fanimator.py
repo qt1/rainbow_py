@@ -96,7 +96,7 @@ def xmaslight(fx, duration=0, **kwargs):
     t = 0
 
     pygame.mixer.init()
-    pygame.mixer.music.load('data/HabibGalbi.mp3')
+    pygame.mixer.music.load('data/music/HabibGalbi.mp3')
     pygame.mixer.music.play()
 
     while duration <= 0 or duration >= t:
