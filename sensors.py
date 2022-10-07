@@ -2,49 +2,55 @@ import datetime
 import logging
 import time
 import serial
-import json 
+import json
 import sys
 from math import sqrt, acos, pi, copysign
 import socket
 import threading
 
-sign = lambda x: copysign(1, x)
+
+def sign(x): return copysign(1, x)
+
 
 drawing_enabled = False
+print_raw_lines_flag = True
 
 if '--sim' in sys.argv or 'baruch' in socket.gethostname():
-    from render import * 
+    from render import *
     drawing_enabled = True
-else:    
-    from render_stub import * 
+else:
+    from render_stub import *
 
 
-
-
-#some very lightwaight 3d vector operations
+# some very lightwaight 3d vector operations
 def vlen(v):
-   return sqrt(sum([x*x for x in v]))
+    return sqrt(sum([x*x for x in v]))
 
-def vadd(v,w):
-   return [x[0]+x[1] for x in zip(v,w)]
+
+def vadd(v, w):
+    return [x[0]+x[1] for x in zip(v, w)]
+
 
 def scale(a, v):
-   return [x*a for x in v]
+    return [x*a for x in v]
 
-def dot(a,b):
-   return sum([x[0]*x[1] for x in zip(a,b)])
+
+def dot(a, b):
+    return sum([x[0]*x[1] for x in zip(a, b)])
+
 
 def vnorm(v):
     d = vlen(v)
     return [x/d for x in v]
 
-def angle_deg(a,b):
-    return acos(dot(vnorm(a),vnorm(b)))*180/pi
+
+def angle_deg(a, b):
+    return acos(dot(vnorm(a), vnorm(b)))*180/pi
 
 
 class RunAvg:
     s = 0
-    s2 = 0 # estimator of typical mse
+    s2 = 0  # estimator of typical mse
 
     init_from_sample = True
     history = []
@@ -53,14 +59,14 @@ class RunAvg:
     def __init__(self, initial, a):
         self.a = a
         self.s = initial
-    
-    def add(self,v):
+
+    def add(self, v):
         if self.init_from_sample:
             self.init_from_sample = False
             self.s = v
 
         if type(self.s) in (tuple, list):
-            self.s = [z[0]*(1-self.a) + self.a*z[1] for z in zip (self.s,v) ]
+            self.s = [z[0]*(1-self.a) + self.a*z[1] for z in zip(self.s, v)]
         else:
             self.s = self.s*(1-self.a) + v*self.a
             self.s2 = self.s2*(1-self.a) + (v-self.s)*(v-self.s)*self.a
@@ -68,7 +74,8 @@ class RunAvg:
         self.history = (self.history + [v])[-self.history_max_len:]
 
 
-WEIGHT_THRESHOLD = 2000 #??
+WEIGHT_THRESHOLD = 2000  # ??
+
 
 class Weight:
     last = 0
@@ -90,16 +97,16 @@ class Weight:
 class Acceleration:
     last = [0, 0, 0]
     count = 0
-    color = [0,0,1]
-    
-    down = RunAvg([0,0,1], 0.01) 
-    avg = RunAvg([0,0,1], 0.2) 
+    color = [0, 0, 1]
+
+    down = RunAvg([0, 0, 1], 0.01)
+    avg = RunAvg([0, 0, 1], 0.2)
 
     def __init__(self, color):
         self.color = color
-    
+
     def add_sample(self, s):
-        self.last = vnorm([s['ax'], s['ay'], s['az']]) 
+        self.last = vnorm([s['ax'], s['ay'], s['az']])
         self.count = self.count + 1
         self.down.add(self.last)
         self.avg.add(self.last)
@@ -107,10 +114,11 @@ class Acceleration:
     def angle_deg(self):
         return angle_deg(self.avg.s, self.down.s)*sign(self.avg.s[2] - self.down.s[2])
 
+
 waight0 = Weight()
 waight1 = Weight()
-accel0 = Acceleration([1,0,0])
-accel1 = Acceleration([0,1,0])
+accel0 = Acceleration([1, 0, 0])
+accel1 = Acceleration([0, 1, 0])
 
 
 #{'HX711_0': {'data': 16659756}, 'HX711_1': {'data': 137991}, 'MPU0': {'ax': -6204, 'ay': -14972, 'az': -1872, 'temp': 1648}, 'MPU1': {'ax': 16228, 'ay': 2912, 'az': -6084, 'temp': 2832}}
@@ -127,7 +135,7 @@ def process_line(j):
     if 'MPU1' in j and 'ax' in j['MPU1']:
         accel1.add_sample(j['MPU1'])
 
-  
+
 def listener():
     while True:
         ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)  # open serial port
@@ -137,7 +145,7 @@ def listener():
         while 1:
             line = ser.readline()
             if line is None or line == b'':
-                break # retry
+                break  # retry
             try:
                 j = json.loads("{"+line.decode("utf-8")+"}")
                 if j != {}:
@@ -145,27 +153,30 @@ def listener():
             except:
                 pass
 
-            print(line)
+            if print_raw_lines_flag:
+                print(line)
+
         ser.close()             # close port
 
 
 def draw_worker():
     renderer = Renderer()
     while 1:
-        renderer[10] = Line([0,0,0], accel0.last, accel0.color)
-        renderer[11] = Line([0,0,0], accel0.down.s, [0,0,1])
-        renderer[12] = Line([0,0,0], accel0.avg.s, [0,1,1])
-        renderer[20] = Line([0,0,0], accel1.last, accel1.color)
-        renderer[21] = Line([0,0,0], accel1.down.s, [0,0,1])
-        renderer[22] = Line([0,0,0], accel1.avg.s, [1,1,0])
+        renderer[10] = Line([0, 0, 0], accel0.last, accel0.color)
+        renderer[11] = Line([0, 0, 0], accel0.down.s, [0, 0, 1])
+        renderer[12] = Line([0, 0, 0], accel0.avg.s, [0, 1, 1])
+        renderer[20] = Line([0, 0, 0], accel1.last, accel1.color)
+        renderer[21] = Line([0, 0, 0], accel1.down.s, [0, 0, 1])
+        renderer[22] = Line([0, 0, 0], accel1.avg.s, [1, 1, 0])
 
         # y2 = []
         # y2 = y2  + [[h[0] for h in accel1.avg.history]]
         # y2 = y2  + [[h[1] for h in accel1.avg.history]]
         # y2 = y2  + [[h[2] for h in accel1.avg.history]]
-        renderer.y2 = [[angle_deg(h,accel1.down.s) for h in accel1.avg.history]]
+        renderer.y2 = [[angle_deg(h, accel1.down.s) for h in accel1.avg.history]]
 
         renderer.show()
+
 
 class Sensors:
     # serial_connection = None
@@ -175,13 +186,21 @@ class Sensors:
     # swing_2_acceleration = Acceleration()
     # swing_2_weight = Weight()
 
-    def __init__(self):
-        self.listener_thread = threading.Thread(target=listener)
-        self.listener_thread.start()
+    def __init__(self, print_raw_lines = False):
+        global print_raw_lines_flag
+        self.initialized = False
+        self.print_raw_lines = print_raw_lines
+        print_raw_lines_flag = print_raw_lines
+        try:
+            self.listener_thread = threading.Thread(target=listener)
+            self.listener_thread.start()
+            self.initialized = True
+            if drawing_enabled:
+                self.draw_thread = threading.Thread(target=draw_worker)
+                self.draw_thread.start()
 
-        if drawing_enabled:
-            self.draw_thread = threading.Thread(target=draw_worker)
-            self.draw_thread.start()
+        except:
+            print("exception is Sensors initialization")
 
     @property
     def swing_multiplier(self):
@@ -194,9 +213,12 @@ class Sensors:
         return self.is_new_person_sitting()
 
 
-
 if __name__ == "__main__":
-    #do yar shit
-    sensors = Sensors()
-    sensors.listener_thread.join()
+    # do yar shit
+    verbose = True
+    if '-v-' in sys.argv:
+        verbose = False
 
+    sensors = Sensors(verbose)
+    if sensors.listener_thread:
+        sensors.listener_thread.join()
