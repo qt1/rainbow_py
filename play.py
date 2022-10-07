@@ -33,7 +33,7 @@ else:
 # Xlights Recording Config
 LARGE_RAINBOW_LEDS = 10 * 7  # num_per_rainbow * rainbows
 SMALL_RAINBOW_LEDS = 7 * 7  # num_per_rainbow * rainbows
-CLOUD_LEDS = 25 * 2
+CLOUD_LEDS = 26 * 2
 TOTAL_NUM_OF_LEDS = LARGE_RAINBOW_LEDS + SMALL_RAINBOW_LEDS + CLOUD_LEDS  # One extra led will always be recorded and added to the packet.
 
 TIME_PACKET_BYTE_SIZE = 4
