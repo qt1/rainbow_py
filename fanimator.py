@@ -14,11 +14,7 @@ from math import sin, cos, pi
 
 I = 255 # intensity
 
-import matplotlib
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-
-# activate simulation if he "--sim" flag is set
+# activate simulation if אhe "--sim" flag is set
 if '--sim' in sys.argv:
     print("Simulation Mode - starting")
     from sim import board
@@ -94,10 +90,6 @@ def xmaslight(fx, duration=0, **kwargs):
 
     t0 = time.time()
     t = 0
-
-    pygame.mixer.init()
-    pygame.mixer.music.load('data/music/HabibGalbi.mp3')
-    pygame.mixer.music.play()
 
     while duration <= 0 or duration >= t:
         t_now = time.time()-t0
@@ -293,6 +285,10 @@ def mult_f(fA, fB, **kwargs):
 
 #first we init..
 init_xmaslight()
+
+pygame.mixer.init()
+pygame.mixer.music.load('data/music/HabibGalbi.mp3')
+pygame.mixer.music.play()
 
 print("blink")
 xmaslight(blink, duration=7)
