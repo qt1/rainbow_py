@@ -1,3 +1,4 @@
+import datetime
 import logging
 import time
 import serial
@@ -60,6 +61,8 @@ class RunAvg:
         self.history = (self.history + [v])[-self.history_max_len:]
 
 
+#WEIGHT_THRESHOLD = 0.002
+
 class Weight:
     last = 0
     count = 0
@@ -70,6 +73,9 @@ class Weight:
         self.count += 1
 
         self.avg1.add(v)
+
+    # def is_sitting(self):
+    #     return self.w > WEIGHT_THRESHOLD
 
 
 class Acceleration:
@@ -114,6 +120,57 @@ def process_line(j):
 
     if 'MPU1' in j and 'ax' in j['MPU1']:
         accel1.add_sample(j['MPU1'])
+
+
+
+# class Sensors:
+#     serial_connection = None
+
+#     swing_1_acceleration = Acceleration()
+#     swing_1_weight = Weight()
+#     swing_2_acceleration = Acceleration()
+#     swing_2_weight = Weight()
+
+#     def __init__(self):
+#         try:
+#             self.serial_connection = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)  # open serial port
+#         except Exception:
+#             return
+#         print(self.serial_connection.name)  # check which port was really used
+#         self.serial_connection.write(b'hello')  # write a string
+
+
+#     @property
+#     def swing_multiplier(self):
+#         # TODO - calculate speed multiplier.
+#         return 1
+
+#     def is_new_person_sitting(self):
+#         # TODO - define terms for correct sitting disruption.
+#         return False
+
+#     def is_disrupt_animation(self):
+#         return self.is_new_person_sitting()
+
+#     def get_sample(self):
+#         line = None
+#         max_tries = 10
+#         i = 0
+#         while line is None or line == b'' or i > max_tries:
+#             line = self.serial_connection.readline()
+#             i += 1
+
+#         try:
+#             j = json.loads("{" + line.decode("utf-8") + "}")
+#             swing_1_acceleration, swing_1_weight, swing_2_acceleration, swing_2_weight = process_line(j)
+#         except Exception as e:
+#             swing_1_acceleration, swing_1_weight, swing_2_acceleration, swing_2_weight = [1, 1, 1], 1, [1, 1, 1], 1
+
+#         self.swing_1_acceleration.add_sample(swing_1_acceleration)
+#         self.swing_2_acceleration.add_sample(swing_2_acceleration)
+#         self.swing_1_weight.add_sample(swing_1_weight)
+#         self.swing_2_weight.add_sample(swing_2_weight)
+
 
 
 def listener():

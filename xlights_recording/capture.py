@@ -110,7 +110,7 @@ while True:
         continue
 
     arr_range = uni_to_range[current_uni]
-    rgb_data[arr_range[0] : arr_range[0] + arr_range[1]] = bytearray(sacn_packet.dmxData[0 : arr_range[1]])
+    rgb_data[arr_range[0]: arr_range[0] + arr_range[1]] = bytearray(sacn_packet.dmxData[0 : arr_range[1]])
 
     # don't record empty byte arrays at beginning of file.
     if is_beginning and is_empty_bytearray(rgb_data):
