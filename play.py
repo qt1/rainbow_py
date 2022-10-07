@@ -27,20 +27,19 @@ else:
     import neopixel
 
 
-
-
-
 # Xlights Recording Config
 LARGE_RAINBOW_LEDS = 10 * 7  # num_per_rainbow * rainbows
 SMALL_RAINBOW_LEDS = 7 * 7  # num_per_rainbow * rainbows
 CLOUD_LEDS = 26 * 2
+
+# Important Variable
 TOTAL_NUM_OF_LEDS = LARGE_RAINBOW_LEDS + SMALL_RAINBOW_LEDS + CLOUD_LEDS  # One extra led will always be recorded and added to the packet.
 
 TIME_PACKET_BYTE_SIZE = 4
 
 BYTES_PER_FRAME = TIME_PACKET_BYTE_SIZE + (TOTAL_NUM_OF_LEDS + 1) * 3   # One extra led will always be recorded and added to the packet.
 
-FPS = 25
+FPS = 40
 TIME_FOR_FRAME_IN_MILLISECONDS = 1000 / FPS
 
 
@@ -78,19 +77,19 @@ class LedPlayer:
     def play_animation(self, **kwargs):
         if self.sequence_type == SequenceTypeChoices.FRAME:
             self.play_animation_by_fps()
-            return
+        else:
+            self.play_animation_by_time()
 
+    def play_animation_by_time(self):
         t0 = datetime.datetime.now()
         frame_index = 0
         t_now_in_milli_sec = 0
-
         if self.sequence_type == SequenceTypeChoices.MUSIC:
             self.play_music()
-
         while frame_index <= self.total_frames:
             animation_timestamp_in_mill_secs = self.get_timestamp_from_frame(frame_index)
             t_now_in_milli_sec = self.get_now_by_sequence_type(animation_timestamp_in_mill_secs,
-                                                               frame_index, t0,  t_now_in_milli_sec)
+                                                               frame_index, t0, t_now_in_milli_sec)
             self.show_led_frame(frame_index)
 
             frame_index += 1
